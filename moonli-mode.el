@@ -136,7 +136,7 @@
 
   (setq-local slime-find-buffer-package-function 'moonli-search-buffer-package))
 
-(add-to-list 'auto-mode-alist '("\\.moonli\\'" . mylang-mode))
+(add-to-list 'auto-mode-alist '("\\.moonli\\'" . moonli-mode))
 
 (defun moonli-compile-region (start end)
   "Compile the region."
