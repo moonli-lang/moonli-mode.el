@@ -175,3 +175,5 @@ to it depending on its sign."
   (slime-interactive-eval
    (format "(eval (moonli:read-moonli-from-string %s))"
            (prin1-to-string (moonli-last-expression)))))
+
+(provide 'moonli)
