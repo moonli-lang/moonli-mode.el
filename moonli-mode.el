@@ -137,3 +137,14 @@
   (setq-local slime-find-buffer-package-function 'moonli-search-buffer-package))
 
 (add-to-list 'auto-mode-alist '("\\.moonli\\'" . mylang-mode))
+
+(defun moonli-last-expression ()
+  (buffer-substring-no-properties
+   (save-excursion (beginning-of-defun) (point))
+   (point)))
+
+(defun moonli-eval-last-expression ()
+  (interactive)
+  (slime-interactive-eval
+   (format "(eval (moonli:read-moonli-from-string %s))"
+           (prin1-to-string (moonli-last-expression)))))
