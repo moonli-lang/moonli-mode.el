@@ -110,19 +110,6 @@
     (goto-char final-pos)
     final-pos))
 
-(with-current-buffer "sample.moonli"
-  (re-search-forward (rx (and line-start
-                                         (or "end"
-                                             (and (* whitespace)
-                                                  (* (or "}" ")"))))))
-                     nil
-                     t))
-
-(with-current-buffer "sample.moonli"
-  ;; (goto-char (point-max))
-  (forward-char 1))
-
-
 
 (define-derived-mode moonli-mode prog-mode "Moonli"
   (setq-local font-lock-defaults '(moonli-font-lock-keywords))
