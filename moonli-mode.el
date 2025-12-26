@@ -1,4 +1,6 @@
 
+(require 'slime)
+
 (defvar moonli-keywords
   '("end"
     "if" "ifelse"
@@ -110,12 +112,28 @@
     (goto-char final-pos)
     final-pos))
 
+(defun moonli-search-buffer-package ()
+  (let ((case-fold-search t)
+        (regexp (rx--to-expr `(seq line-start
+                                   (* whitespace)
+                                   (? (or "cl:"
+                                          "common-lisp:"))
+                                   "in-package"
+                                   (+ whitespace)
+                                   (group (+ ,moonli-symbol-characters-rx))
+                                   (* ,moonli-punctuation-characters-rx)))))
+    (save-excursion
+      (when (or (re-search-backward regexp nil t)
+                (re-search-forward regexp nil t))
+        (match-string-no-properties 1)))))
 
 (define-derived-mode moonli-mode prog-mode "Moonli"
   (setq-local font-lock-defaults '(moonli-font-lock-keywords))
   (setq-local indent-line-function 'moonli-indent-line)
 
   (setq-local end-of-defun-function 'moonli-end-of-defun)
-  (setq-local beginning-of-defun-function 'moonli-beginning-of-defun))
+  (setq-local beginning-of-defun-function 'moonli-beginning-of-defun)
+
+  (setq-local slime-find-buffer-package-function 'moonli-search-buffer-package))
 
 (add-to-list 'auto-mode-alist '("\\.moonli\\'" . mylang-mode))
