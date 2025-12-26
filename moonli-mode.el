@@ -138,6 +138,33 @@
 
 (add-to-list 'auto-mode-alist '("\\.moonli\\'" . mylang-mode))
 
+(defun moonli-compile-region (start end)
+  "Compile the region."
+  (interactive "r")
+  ;; Check connection before running hooks things like
+  ;; slime-flash-region don't make much sense if there's no connection
+  (slime-connection)
+  (slime-flash-region start end)
+  (run-hook-with-args 'slime-before-compile-functions start end)
+  (let ((string (format "(eval (moonli:read-moonli-from-string %s))"
+                        (prin1-to-string
+                         (format "\n%s"
+                                 (buffer-substring-no-properties start end))))))
+    (slime-compile-string string start)))
+
+(defun moonli-compile-defun (&optional raw-prefix-arg)
+  "Compile the current toplevel form.
+
+With (positive) prefix argument the form is compiled with maximal
+debug settings (`C-u'). With negative prefix argument it is compiled for
+speed (`M--'). If a numeric argument is passed set debug or speed settings
+to it depending on its sign."
+  (interactive "P")
+  (let ((slime-compilation-policy (slime-compute-policy raw-prefix-arg)))
+    (if (use-region-p)
+        (moonli-compile-region (region-beginning) (region-end))
+      (apply #'moonli-compile-region (slime-region-for-defun-at-point)))))
+
 (defun moonli-last-expression ()
   (buffer-substring-no-properties
    (save-excursion (beginning-of-defun) (point))
