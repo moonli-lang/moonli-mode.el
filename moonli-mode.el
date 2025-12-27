@@ -30,6 +30,15 @@
     "labels"
     "loop"))
 
+(defvar moonli-type-keywords
+  '("integer" "fixnum" "ratio" "rational" "real" "complex"
+    "float" "single-float" "double-float" "long-float" "short-float"
+    "character" "base-char"
+    "string" "simple-string"
+    "vector" "simple-vector"
+    "array" "simple-array"
+    "symbol" "hash-table"))
+
 (defvar moonli-punctuation-characters-rx
   `(any "|" ":" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}"
         whitespace))
@@ -70,7 +79,11 @@
                                  (or line-start
                                      line-end
                                      (+ ,moonli-punctuation-characters-rx))))
-              '((1 font-lock-builtin-face)))))
+              '((1 font-lock-builtin-face)))
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                                 (group (or ,@moonli-type-keywords))
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-type-face)))))
 
 
 (defun moonli-indent-line ()
