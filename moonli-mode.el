@@ -2,7 +2,9 @@
 (require 'slime)
 
 (defvar moonli-keywords
-  '("end"
+  '("t"
+    "nil"
+    "end"
     "if" "ifelse"
     "declare"
     "declaim"
@@ -14,17 +16,13 @@
     "slots"
     "options"))
 
-(defvar moonli-builtin-functions
-  '("format"
-    "print"
-    "values"
-    "list"
-    "gethash"))
-
 (defvar moonli-block-start-keywords
   '("if"
     "defun"
     "defpackage"
+    "defclass"
+    "defstruct"
+    "deftype"
     "let"
     "let+"
     "labels"
@@ -40,8 +38,10 @@
     "symbol" "hash-table"))
 
 (defvar moonli-punctuation-characters-rx
-  `(any "|" ":" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}"
-        whitespace))
+  `(or line-start
+       line-end
+       (any "|" ":" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}" ";"
+            whitespace)))
 
 (defvar moonli-symbol-characters-rx
   `(any alnum
@@ -88,35 +88,42 @@
         (goto-char (1+ match-end))))))
 
 (defvar moonli-font-lock-keywords
-  (list (cons (rx--to-expr `(seq (or line-start
-                                     line-end
-                                     (+ ,moonli-punctuation-characters-rx))
+  (list (cons (rx line-start
+                  "#"
+                  (* not-newline)
+                  line-end)
+              'font-lock-comment-face)
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
                                  (group (or ,@moonli-keywords))
-                                 (or line-start
-                                     line-end
-                                     (+ ,moonli-punctuation-characters-rx))))
-              'font-lock-keyword-face)
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-keyword-face)))
         (cons moonli-definition-pattern
               `((1 font-lock-constant-face)
                 (2 font-lock-variable-name-face)))
-        (cons (rx symbol-start
-                  (or "t" "nil")
-                  symbol-end)
-              'font-lock-keyword-face)
-        (cons (rx--to-expr `(seq (or line-start
-                                     line-end
-                                     (+ ,moonli-punctuation-characters-rx))
-                                 (group (or ,@moonli-builtin-functions))
-                                 (or line-start
-                                     line-end
-                                     (+ ,moonli-punctuation-characters-rx))))
-              '((1 font-lock-builtin-face)))
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                                 (group ":"
+                                        (+ ,moonli-symbol-characters-rx))
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-constant-face)))
         (cons 'moonli-function-matcher
               'font-lock-builtin-face)
+
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
                                  (group (or ,@moonli-type-keywords))
                                  ,moonli-punctuation-characters-rx))
-              '((1 font-lock-type-face)))))
+              '((1 font-lock-type-face)))
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                                 (group "*"
+                                        (+ ,moonli-symbol-characters-rx)
+                                        "*")
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-constant-face)))
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                                 (group "+"
+                                        (+ ,moonli-symbol-characters-rx)
+                                        "+")
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-constant-face)))))
 
 
 (defun moonli-indent-line ()
@@ -244,10 +251,11 @@
                                    (+ whitespace)
                                    (group (+ ,moonli-symbol-characters-rx))
                                    (* ,moonli-punctuation-characters-rx)))))
-    (save-excursion
-      (when (or (re-search-backward regexp nil t)
-                (re-search-forward regexp nil t))
-        (match-string-no-properties 1)))))
+    (or (save-excursion
+          (when (or (re-search-backward regexp nil t)
+                    (re-search-forward regexp nil t))
+            (match-string-no-properties 1)))
+        ":common-lisp-user")))
 
 (define-derived-mode moonli-mode prog-mode "Moonli"
   (setq-local font-lock-defaults '(moonli-font-lock-keywords))
