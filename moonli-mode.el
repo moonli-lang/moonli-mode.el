@@ -56,6 +56,37 @@
                      (* whitespace)
                      (group (+ ,moonli-symbol-characters-rx)))))
 
+(defvar moonli-symbol-regex
+  (rx--to-expr
+   `(seq (or line-start
+             line-end
+             ,moonli-punctuation-characters-rx)
+         (group (+ ,moonli-symbol-characters-rx))
+         (or line-start
+             line-end
+             ,moonli-punctuation-characters-rx))))
+
+(cl-defun moonli-function-matcher (bound)
+  (interactive)
+  ;; (message "%f" bound)
+  (let ((current-point (point)))
+    (while (re-search-forward moonli-symbol-regex bound t)
+      (let ((match (upcase (match-string-no-properties 1)))
+            (match-start (match-beginning 1))
+            (match-end (match-end 1)))
+        ;; (message match)
+        ;; (sleep-for 1)
+        (when (and (null (nth 3 (syntax-ppss match-start))) ; not in string
+                   (null (nth 4 (syntax-ppss match-start))) ; not in comment
+                   (slime-eval
+                    `(cl:let ((sym (cl:find-symbol ,match "COMMON-LISP")))
+                        (cl:and sym
+                                (cl:fboundp sym)
+                                (cl:null (cl:macro-function sym))))))
+          (set-match-data (list match-start match-end))
+          (cl-return-from moonli-function-matcher t))
+        (goto-char (1+ match-end))))))
+
 (defvar moonli-font-lock-keywords
   (list (cons (rx--to-expr `(seq (or line-start
                                      line-end
@@ -80,6 +111,8 @@
                                      line-end
                                      (+ ,moonli-punctuation-characters-rx))))
               '((1 font-lock-builtin-face)))
+        (cons 'moonli-function-matcher
+              'font-lock-builtin-face)
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
                                  (group (or ,@moonli-type-keywords))
                                  ,moonli-punctuation-characters-rx))
