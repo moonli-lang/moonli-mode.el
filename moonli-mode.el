@@ -80,12 +80,12 @@
                    (null (nth 4 (syntax-ppss match-start))) ; not in comment
                    (slime-eval
                     `(cl:let ((sym (cl:find-symbol ,match "COMMON-LISP")))
-                        (cl:and sym
-                                (cl:fboundp sym)
-                                (cl:null (cl:macro-function sym))))))
+                       (cl:and sym
+                               (cl:fboundp sym)
+                               (cl:null (cl:macro-function sym))))))
           (set-match-data (list match-start match-end))
           (cl-return-from moonli-function-matcher t))
-        (goto-char (1+ match-end))))))
+        (goto-char match-end)))))
 
 (defvar moonli-font-lock-keywords
   (list (cons (rx line-start
