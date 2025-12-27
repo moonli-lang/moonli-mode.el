@@ -5,12 +5,13 @@
   '("t"
     "nil"
     "end"
-    "if" "ifelse"
+    "if" "ifelse" "else" "elif"
     "declare"
     "declaim"
     "loop" "let" "let+"
     "progn" "in-package"
     "labels"
+    "lambda"
     "optima:match"
     "match"
     "slots"
@@ -26,6 +27,7 @@
     "let"
     "let+"
     "labels"
+    "lambda"
     "loop"))
 
 (defvar moonli-type-keywords
@@ -94,10 +96,6 @@
                   (* not-newline)
                   line-end)
               'font-lock-comment-face)
-        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
-                                 (group (or ,@moonli-keywords))
-                                 ,moonli-punctuation-characters-rx))
-              '((1 font-lock-keyword-face)))
         (cons moonli-definition-pattern
               `((1 font-lock-constant-face)
                 (2 font-lock-variable-name-face)))
@@ -106,9 +104,6 @@
                                         (+ ,moonli-symbol-characters-rx))
                                  ,moonli-punctuation-characters-rx))
               '((1 font-lock-constant-face)))
-        (cons 'moonli-function-matcher
-              'font-lock-builtin-face)
-
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
                                  (group (or ,@moonli-type-keywords))
                                  ,moonli-punctuation-characters-rx))
@@ -124,7 +119,12 @@
                                         (+ ,moonli-symbol-characters-rx)
                                         "+")
                                  ,moonli-punctuation-characters-rx))
-              '((1 font-lock-constant-face)))))
+              '((1 font-lock-constant-face)))
+        (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                                 (group (or ,@moonli-keywords))
+                                 ,moonli-punctuation-characters-rx))
+              '((1 font-lock-keyword-face)))
+        (cons 'moonli-function-matcher 'font-lock-builtin-face)))
 
 
 (defun moonli-indent-line ()
