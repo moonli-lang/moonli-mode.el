@@ -102,7 +102,7 @@
               `((1 font-lock-constant-face)
                 (2 font-lock-variable-name-face)))
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
-                                 (group ":"
+                                 (group (any ":" "$")
                                         (+ ,moonli-symbol-characters-rx))
                                  ,moonli-punctuation-characters-rx))
               '((1 font-lock-constant-face)))
