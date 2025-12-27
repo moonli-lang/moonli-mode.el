@@ -89,6 +89,7 @@
 
 (defvar moonli-font-lock-keywords
   (list (cons (rx line-start
+                  (* space)
                   "#"
                   (* not-newline)
                   line-end)
