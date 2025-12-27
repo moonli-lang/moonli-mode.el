@@ -21,13 +21,22 @@
     "list"
     "gethash"))
 
+(defvar moonli-block-start-keywords
+  '("if"
+    "defun"
+    "defpackage"
+    "let"
+    "let+"
+    "labels"
+    "loop"))
+
 (defvar moonli-punctuation-characters-rx
   `(any "|" ":" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}"
         whitespace))
 
 (defvar moonli-symbol-characters-rx
   `(any alnum
-        "!" "@" "#" "%" "^" "&" "*"
+        "!" "@" "%" "^" "&" "*"
         "-" "_" "+" "=" "<" ">" "/" "?" ":"))
 
 (defvar moonli-definition-pattern
@@ -69,48 +78,115 @@
   (indent-line-to
    (* 2 (car (syntax-ppss (point)))))) ; indent by nesting depth
 
-(defun moonli-beginning-of-defun (&optional arg)
-  (backward-char)
-  (let ((pos (re-search-backward (rx (and line-start
-                                          word-boundary))
-                                 nil
-                                 t)))
-    (if (string= "end" (symbol-at-point))
-        (moonli-beginning-of-defun)
-      pos)))
+(defun moonli-point-in-string-or-comment ()
+  (let ((syntax (syntax-ppss)))
+    (or (nth 3 syntax)
+        (nth 4 syntax))))
 
-(defun moonli-next-close-paren ()
-  (re-search-forward (rx (and line-start
-                              (+ (any "}" ")"))))
-                     nil
-                     t))
-
-(defun moonli-next-end-of-expr ()
+(defun moonli-backward-skip-string-or-comment ()
   (interactive)
+  (let ((syntax (syntax-ppss)))
+    (when (or (nth 3 syntax)
+              (nth 4 syntax))
+      (goto-char (nth 8 syntax)))))
+
+(defun moonli-forward-skip-string-or-comment ()
+  (interactive)
+  (let ((syntax (syntax-ppss)))
+    (when (or (nth 3 syntax)
+              (nth 4 syntax))
+      (goto-char (nth 8 syntax))
+      (forward-sexp 2 t))))
+
+(defun moonli-beginning-of-defun (&optional arg)
+  (interactive)
+  (moonli-skip-whitespace-or-comments)
+  (let (final-pos)
+    (dotimes (_i (or arg 1))
+      (loop do
+        (moonli-backward-skip-string-or-comment)
+        (backward-char)
+        (let ((pos (re-search-backward (rx (and line-start
+                                                word-boundary))
+                                       nil
+                                       t)))
+          (if (string= "end" (symbol-at-point))
+              (moonli-beginning-of-defun)
+            (setf final-pos pos)))
+        while (moonli-point-in-string-or-comment)))
+    final-pos))
+
+(defun moonli-end-of-block-raw ()
   (re-search-forward (rx line-start
-                         (not whitespace)
-                         (* not-newline)
-                         line-end)))
+                         "end"
+                         (* (any " " "	")))
+                     nil
+                     t)
+  (end-of-line))
+
+(cl-defun moonli-end-of-block-or-expression ()
+  (interactive)
+  (beginning-of-line)
+  (let ((current-point (point)))
+
+    (when (member (symbol-name (symbol-at-point))
+                  moonli-block-start-keywords)
+      (moonli-end-of-block-raw)
+      (loop while (moonli-point-in-string-or-comment)
+        do (moonli-forward-skip-string-or-comment)
+        (moonli-end-of-block-raw))
+      (return-from moonli-end-of-block-or-expression (point)))
+
+    (goto-char current-point)
+    (re-search-forward (rx line-start
+                           (not whitespace)
+                           (* not-newline)
+                           (* whitespace)
+                           line-end))
+    (end-of-line)
+    (skip-chars-backward " \t")
+
+    (let ((char-at-point (char-to-string (char-after))))
+      (cond ((member char-at-point '("(" "{"))
+             (re-search-forward (rx (and line-start
+                                         (+ (any "}" ")" ";"))))
+                                nil
+                                t))
+            ((member char-at-point '(":"))
+             (next-line)
+             (moonli-end-of-block-or-expression)))
+      (moonli-skip-whitespace-or-comments)
+      (return-from moonli-end-of-block-or-expression (point)))))
 
 (defvar moonli-end-of-defun-functions
-  '(moonli-next-end-of-expr
-    moonli-next-close-paren))
+  '(moonli-end-of-block-or-expression))
 
 (defun moonli-skip-whitespace-or-comments ()
   (interactive)
-  (re-search-forward (rx line-start
-                         (not (any whitespace "#")))))
+  (re-search-forward (rx--to-expr `(seq line-start
+                                        ,moonli-symbol-characters-rx))
+                     nil
+                     t)
+  (beginning-of-line))
 
 (defun moonli-end-of-defun (&optional arg)
-  (moonli-skip-whitespace-or-comments)
-  (let* ((current-point (point))
-         (end-pos (mapcar (lambda (fn)
-                            (goto-char current-point)
-                            (or (funcall fn) (point-max)))
-                          moonli-end-of-defun-functions))
-         (final-pos (apply #'min end-pos)))
-    (goto-char final-pos)
+  (interactive)
+  (let (final-pos)
+    (dotimes (_i (or arg 1))
+      (loop do
+        (moonli-forward-skip-string-or-comment)
+        (moonli-skip-whitespace-or-comments)
+        (let* ((current-point (point))
+               (end-pos (mapcar (lambda (fn)
+                                  (goto-char current-point)
+                                  (or (funcall fn) (point-max)))
+                                moonli-end-of-defun-functions))
+               (pos (apply #'min end-pos)))
+          (goto-char pos)
+          (setf final-pos pos))
+        while (moonli-point-in-string-or-comment)))
     final-pos))
+
 
 (defun moonli-search-buffer-package ()
   (let ((case-fold-search t)
