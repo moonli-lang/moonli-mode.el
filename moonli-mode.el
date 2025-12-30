@@ -6,6 +6,7 @@
     "nil"
     "end"
     "if" "ifelse" "else" "elif"
+    "and" "or" "not"
     "declare"
     "declaim"
     "loop" "let" "let+"
@@ -15,7 +16,10 @@
     "optima:match"
     "match"
     "slots"
-    "options"))
+    "options"
+    "defstruct"
+    "defclass"
+    "with"))
 
 (defvar moonli-block-start-keywords
   '("if"
@@ -28,7 +32,8 @@
     "let+"
     "labels"
     "lambda"
-    "loop"))
+    "loop"
+    "with"))
 
 (defvar moonli-type-keywords
   '("integer" "fixnum" "ratio" "rational" "real" "complex"
@@ -52,8 +57,9 @@
 
 (defvar moonli-definition-pattern
   (rx--to-expr `(seq (group symbol-start
-                            "def"
-                            (* ,moonli-symbol-characters-rx)
+                            (or (seq "def"
+                                     (* ,moonli-symbol-characters-rx)
+                                     "with"))
                             symbol-end)
                      (* whitespace)
                      (group (+ ,moonli-symbol-characters-rx)))))
