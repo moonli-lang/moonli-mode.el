@@ -74,11 +74,28 @@
              line-end
              ,moonli-punctuation-characters-rx))))
 
+(defvar moonli-functions nil)
+(defvar moonli-functions-regex nil)
+
+(defun moonli-functions-refresh ()
+  (interactive)
+  (setf moonli-functions
+        (slime-eval `(cl:let ((symbols))
+                       (cl:do-symbols (s :cl)
+                          (cl:when (cl:and (cl:fboundp s)
+                                           (cl:null (cl:macro-function s)))
+                             (cl:push (cl:string-downcase (cl:symbol-name s)) symbols)))
+                       symbols)))
+  (setf moonli-functions-regex
+        (rx--to-expr `(seq ,moonli-punctuation-characters-rx
+                           (group (or ,@moonli-functions))
+                           ,moonli-punctuation-characters-rx))))
+
 (cl-defun moonli-function-matcher (bound)
   (interactive)
   ;; (message "%f" bound)
   (let ((current-point (point)))
-    (while (re-search-forward moonli-symbol-regex bound t)
+    (while (re-search-forward moonli-functions-regex bound t)
       (let ((match (upcase (match-string-no-properties 1)))
             (match-start (match-beginning 1))
             (match-end (match-end 1)))
@@ -265,6 +282,7 @@
         ":common-lisp-user")))
 
 (define-derived-mode moonli-mode prog-mode "Moonli"
+  (moonli-functions-refresh)
   (setq-local font-lock-defaults '(moonli-font-lock-keywords))
   (setq-local indent-line-function 'moonli-indent-line)
 
