@@ -120,7 +120,7 @@
                   line-end)
               'font-lock-comment-face)
         (cons moonli-definition-pattern
-              `((1 font-lock-constant-face)
+              `((1 font-lock-keyword-face)
                 (2 font-lock-variable-name-face)))
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
                                  (group (any ":" "$")
@@ -151,7 +151,6 @@
 
 
 (defun moonli-indent-line ()
-  (print (syntax-ppss))
   (indent-line-to
    (* 2 (car (syntax-ppss (point)))))) ; indent by nesting depth
 
@@ -180,7 +179,7 @@
   (moonli-skip-whitespace-or-comments)
   (let (final-pos)
     (dotimes (_i (or arg 1))
-      (loop do
+      (cl-loop do
         (moonli-backward-skip-string-or-comment)
         (backward-char)
         (let ((pos (re-search-backward (rx (and line-start
@@ -209,7 +208,7 @@
     (when (member (symbol-name (symbol-at-point))
                   moonli-block-start-keywords)
       (moonli-end-of-block-raw)
-      (loop while (moonli-point-in-string-or-comment)
+      (cl-loop while (moonli-point-in-string-or-comment)
         do (moonli-forward-skip-string-or-comment)
         (moonli-end-of-block-raw))
       (return-from moonli-end-of-block-or-expression (point)))
@@ -250,7 +249,7 @@
   (interactive)
   (let (final-pos)
     (dotimes (_i (or arg 1))
-      (loop do
+      (cl-loop do
         (moonli-forward-skip-string-or-comment)
         (moonli-skip-whitespace-or-comments)
         (let* ((current-point (point))
