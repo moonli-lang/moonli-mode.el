@@ -17,6 +17,10 @@
     "match"
     "slots"
     "options"
+    "defun"
+    "defpackage"
+    "defparameter"
+    "defvar"
     "defstruct"
     "defclass"
     "with"))
@@ -232,7 +236,7 @@
       (cl-loop while (moonli-point-in-string-or-comment)
         do (moonli-forward-skip-string-or-comment)
         (moonli-end-of-block-raw))
-      (return-from moonli-end-of-block-or-expression (point)))
+      (cl-return-from moonli-end-of-block-or-expression (point)))
 
     (goto-char current-point)
     (re-search-forward (rx line-start
@@ -250,10 +254,10 @@
                                 nil
                                 t))
             ((member char-at-point '(":"))
-             (next-line)
+             (forward-line)
              (moonli-end-of-block-or-expression)))
       (moonli-skip-whitespace-or-comments)
-      (return-from moonli-end-of-block-or-expression (point)))))
+      (cl-return-from moonli-end-of-block-or-expression (point)))))
 
 (defvar moonli-end-of-defun-functions
   '(moonli-end-of-block-or-expression))
