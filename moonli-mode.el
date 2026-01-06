@@ -152,7 +152,28 @@
 
 (defun moonli-indent-line ()
   (indent-line-to
-   (* 2 (car (syntax-ppss (point)))))) ; indent by nesting depth
+   (let ((last-indentation (save-excursion
+                             (forward-line -1)
+                             ;; indent to same as previous line
+                             (current-indentation)))
+         (end-of-block-p (save-excursion
+                           (beginning-of-line)
+                           (when (re-search-forward moonli-symbol-regex (line-end-position) t)
+                             (string-equal "end" (match-string 1)))))
+         (current-line-start (save-excursion
+                               (beginning-of-line)
+                               (when (re-search-forward moonli-symbol-regex (line-end-position) t)
+                                 (match-string 1))))
+         (last-line-start (save-excursion
+                            (forward-line -1)
+                            (when (re-search-forward moonli-symbol-regex (line-end-position) t)
+                              (match-string 1)))))
+     (cond (end-of-block-p
+            (- last-indentation 2))
+           ((member last-line-start moonli-block-start-keywords)
+            (+ last-indentation 2))
+           (t
+            last-indentation)))))
 
 (defun moonli-point-in-string-or-comment ()
   (let ((syntax (syntax-ppss)))
