@@ -1,3 +1,6 @@
+;;; moonli-mode.el --- Moonli mode, and its idiosyncratic commands  -*- lexical-binding:t -*-
+
+;;; Code:
 
 (require 'slime)
 
@@ -18,16 +21,21 @@
     "slots"
     "options"
     "defun"
+    "defmethod"
     "defpackage"
     "defparameter"
     "defvar"
     "defstruct"
     "defclass"
+    "deftype"
     "with"))
 
 (defvar moonli-block-start-keywords
   '("if"
+    "elif"
+    "else"
     "defun"
+    "defmethod"
     "defpackage"
     "defclass"
     "defstruct"
