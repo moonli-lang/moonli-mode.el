@@ -339,6 +339,12 @@
                                  (buffer-substring-no-properties start end))))))
     (slime-compile-string string start)))
 
+(defun moonli-find-definitions-rpc (name)
+  (slime-eval `(definitions/swank:find-definitions-for-emacs ,name)))
+
+(setf slime-find-definitions-function 'moonli-find-definitions-rpc)
+(setf slime-find-definitions-function 'slime-find-definitions-rpc)
+
 (defun moonli-compile-defun (&optional raw-prefix-arg)
   "Compile the current toplevel form.
 
