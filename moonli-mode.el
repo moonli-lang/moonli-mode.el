@@ -363,4 +363,6 @@ to it depending on its sign."
    (format "(eval (moonli:read-moonli-from-string %s))"
            (prin1-to-string (moonli-last-expression)))))
 
-(provide 'moonli)
+(provide 'moonli-mode)
+
+;;; moonli-mode.el ends here
