@@ -31,6 +31,8 @@
     "define-condition"
     "handler-bind"
     "handler-case"
+    "pprint-logical-block"
+    "print-unreadable-object"
     "with"))
 
 (defvar moonli-block-start-keywords
@@ -51,6 +53,8 @@
     "define-condition"
     "handler-bind"
     "handler-case"
+    "pprint-logical-block"
+    "print-unreadable-object"
     "with"))
 
 (defvar moonli-type-keywords
