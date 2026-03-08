@@ -28,6 +28,9 @@
     "defstruct"
     "defclass"
     "deftype"
+    "define-condition"
+    "handler-bind"
+    "handler-case"
     "with"))
 
 (defvar moonli-block-start-keywords
@@ -45,6 +48,9 @@
     "labels"
     "lambda"
     "loop"
+    "define-condition"
+    "handler-bind"
+    "handler-case"
     "with"))
 
 (defvar moonli-type-keywords
