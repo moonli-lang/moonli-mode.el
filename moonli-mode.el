@@ -343,17 +343,54 @@
   (slime-connection)
   (slime-flash-region start end)
   (run-hook-with-args 'slime-before-compile-functions start end)
-  (let ((string (format "(eval (moonli:read-moonli-from-string %s))"
-                        (prin1-to-string
-                         (format "\n%s"
-                                 (buffer-substring-no-properties start end))))))
-    (slime-compile-string string start)))
+  (let* ((transpilation-form
+          `(cl:let ((cl:*package*
+                     (cl:find-package ,(upcase (substring (slime-current-package) 1)))))
+                   ;; FIXME: This assumes there's only a single form
+                   (esrap:parse 'moonli:moonli-expression
+                                ,(string-trim (buffer-substring-no-properties start end)
+                                              "[ \t\n\r]+" "[ ;\t\n\r]+"))))
+         (line (save-excursion
+                 (goto-char start)
+                 (list (line-number-at-pos) (1+ (current-column)))))
+         (position `((:position ,start) (:line ,@line))))
+    (slime-eval-async
+        `(swank:compile-string-for-emacs
+          ,(prin1-to-string (list 'cl:eval transpilation-form))
+          ,(buffer-name)
+          ',position
+          ,(if (buffer-file-name) (slime-to-lisp-filename (buffer-file-name)))
+          ',slime-compilation-policy)
+      #'slime-compilation-finished)))
+
+(defun moonli-transpile-region (start end)
+  "Transpile the region."
+  (interactive "r")
+  ;; Check connection before running hooks things like
+  ;; slime-flash-region don't make much sense if there's no connection
+  (slime-connection)
+  (slime-flash-region start end)
+  (run-hook-with-args 'slime-before-compile-functions start end)
+  (let* ((transpilation-form
+          `(cl:let ((cl:*package*
+                     (cl:find-package ,(upcase (substring (slime-current-package) 1)))))
+                   ;; FIXME: This assumes there's only a single form
+                   (cl:format cl:nil "~S"
+                              (esrap:parse 'moonli:moonli-expression
+                                           ,(string-trim (buffer-substring-no-properties start end)
+                                                         "[ \t\n\r]+" "[ ;\t\n\r]+")))))
+         (line (save-excursion
+                 (goto-char start)
+                 (list (line-number-at-pos) (1+ (current-column)))))
+         (position `((:position ,start) (:line ,@line))))
+    (slime-eval-async transpilation-form
+      #'slime-initialize-macroexpansion-buffer)))
 
 (defun moonli-find-definitions-rpc (name)
   (slime-eval `(definitions/swank:find-definitions-for-emacs ,name)))
 
 (setf slime-find-definitions-function 'moonli-find-definitions-rpc)
-(setf slime-find-definitions-function 'slime-find-definitions-rpc)
+;; (setf slime-find-definitions-function 'slime-find-definitions-rpc)
 
 (defun moonli-compile-defun (&optional raw-prefix-arg)
   "Compile the current toplevel form.
