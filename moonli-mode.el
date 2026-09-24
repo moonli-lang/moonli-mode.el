@@ -183,8 +183,22 @@
          (last-line-start (save-excursion
                             (forward-line -1)
                             (when (re-search-forward moonli-symbol-regex (line-end-position) t)
-                              (match-string 1)))))
-     (cond (end-of-block-p
+                              (match-string 1))))
+         (opening-delimiter (save-excursion
+                              (back-to-indentation)
+                              (nth 1 (syntax-ppss))))
+         (closing-delimiter-p (save-excursion
+                                (back-to-indentation)
+                                (memq (char-after) '(?\) ?\] ?\})))))
+     (cond ((and closing-delimiter-p opening-delimiter)
+            (save-excursion
+              (goto-char opening-delimiter)
+              (current-indentation)))
+           (opening-delimiter
+            (save-excursion
+              (goto-char opening-delimiter)
+              (+ (current-indentation) 2)))
+           (end-of-block-p
             (- last-indentation 2))
            ((member last-line-start moonli-block-start-keywords)
             (+ last-indentation 2))
