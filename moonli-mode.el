@@ -135,13 +135,7 @@
         (goto-char match-end)))))
 
 (defvar moonli-font-lock-keywords
-  (list (cons (rx line-start
-                  (* space)
-                  "#"
-                  (* not-newline)
-                  line-end)
-              'font-lock-comment-face)
-        (cons moonli-definition-pattern
+  (list (cons moonli-definition-pattern
               `((1 font-lock-keyword-face)
                 (2 font-lock-variable-name-face)))
         (cons (rx--to-expr `(seq ,moonli-punctuation-characters-rx
@@ -325,6 +319,8 @@
 
 (define-derived-mode moonli-mode prog-mode "Moonli"
   (moonli-functions-refresh)
+  (modify-syntax-entry ?# "<")
+  (modify-syntax-entry ?\n ">")
   (setq-local font-lock-defaults '(moonli-font-lock-keywords))
   (setq-local indent-line-function 'moonli-indent-line)
 
