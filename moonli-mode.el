@@ -69,7 +69,7 @@
 (defvar moonli-punctuation-characters-rx
   `(or line-start
        line-end
-       (any "|" ":" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}" ";"
+       (any "|" "," "$" "'" "\"" "(" ")" "[" "]" "{" "}" ";"
             whitespace)))
 
 (defvar moonli-symbol-characters-rx
