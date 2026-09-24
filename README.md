@@ -9,11 +9,20 @@
 If you use [use-package](https://github.com/jwiegley/use-package) (which you should!):
 
 ```emacs-lisp
-(use-package moonli
+(use-package moonli-mode
   :load-path "/path/to/moonli-mode.el/moonli-mode.el"
+  :mode "\\.moonli\\'"
   :bind (:map moonli-mode-map
          ("C-c C-c" . moonli-compile-defun)
-         ("C-x C-e" . moonli-eval-last-expression)))
+         ("C-x C-e" . moonli-eval-last-expression)
+         ("C-c C-t" . slime-toggle-trace-fdefinition)
+         ("C-c C-e" . moonli-transpile-region)
+         ("C-c C-d d" . slime-describe-symbol))
+  :config
+  (add-to-list 'slime-company-major-modes 'moonli-mode)
+  (defun moonli-company-setup ()
+    (setq-local company-backends '((company-capf company-slime))))
+  (add-hook 'moonli-mode-hook 'moonli-company-setup))
 ```
 
 If you don't use `use-package`, add the following to your config:
