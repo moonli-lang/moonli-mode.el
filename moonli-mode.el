@@ -353,13 +353,14 @@
   (slime-connection)
   (slime-flash-region start end)
   (run-hook-with-args 'slime-before-compile-functions start end)
-  (let* ((transpilation-form
+  (let* ((moonli-code (string-trim (buffer-substring-no-properties start end)
+                                   "[ \t\n\r]+" "[ ;\t\n\r]+"))
+         (transpilation-form
           `(cl:let ((cl:*package*
-                     (cl:find-package ,(upcase (substring (slime-current-package) 1)))))
+                     (cl:find-package ,(upcase (substring (slime-current-package) 1))))
+                    (moonli::*moonli-parse-string* ,moonli-code))
                    ;; FIXME: This assumes there's only a single form
-                   (esrap:parse 'moonli:moonli-expression
-                                ,(string-trim (buffer-substring-no-properties start end)
-                                              "[ \t\n\r]+" "[ ;\t\n\r]+"))))
+                   (esrap:parse 'moonli:moonli-expression ,moonli-code)))
          (line (save-excursion
                  (goto-char start)
                  (list (line-number-at-pos) (1+ (current-column)))))
